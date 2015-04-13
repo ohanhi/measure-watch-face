@@ -19,8 +19,8 @@ public class MeasureWatchFace {
     private static final int TICK_COUNT = 40;
     private static final float TICK_SPACING = 20f;
     private static final float TICK_HOUR_LENGTH = 20f;
-    private static final float TICK_HALF_HOUR_LENGTH = TICK_HOUR_LENGTH * 0.7f;
-    private static final float TICK_QUARTER_HOUR_LENGTH = TICK_HOUR_LENGTH * 0.5f;
+    private static final float TICK_HALF_HOUR_LENGTH = TICK_HOUR_LENGTH * 0.5f;
+    private static final float TICK_QUARTER_HOUR_LENGTH = TICK_HOUR_LENGTH * 0.4f;
     private static final float CARD_FEATHER_RADIUS = 5f;
 
     private final Paint backgroundPaint;
@@ -30,7 +30,6 @@ public class MeasureWatchFace {
     private final Paint tickPaint;
     private final Paint indicatorPaint;
     private final Time time;
-    private final float[] tickPoints;
 
     private boolean inAmbientMode = false;
 
@@ -59,13 +58,10 @@ public class MeasureWatchFace {
         indicatorPaint.setStrokeCap(Paint.Cap.ROUND);
         indicatorPaint.setAntiAlias(true);
 
-        float tickPoints[] = new float[4*TICK_COUNT];
-
-
-        return new MeasureWatchFace(timePaint, datePaint, tickPaint, indicatorPaint, new Time(), tickPoints);
+        return new MeasureWatchFace(timePaint, datePaint, tickPaint, indicatorPaint, new Time());
     }
 
-    MeasureWatchFace(Paint timePaint, Paint datePaint, Paint tickPaint, Paint indicatorPaint, Time time, float[] tickPoints) {
+    MeasureWatchFace(Paint timePaint, Paint datePaint, Paint tickPaint, Paint indicatorPaint, Time time) {
         this.backgroundPaint = new Paint(Color.BLACK);
         this.timePaint = timePaint;
         this.datePaint = datePaint;
@@ -73,7 +69,6 @@ public class MeasureWatchFace {
         this.indicatorPaint = indicatorPaint;
         this.indicatorAmbientModePaint = indicatorPaint;
         this.time = time;
-        this.tickPoints = tickPoints;
     }
 
     public void draw(Canvas canvas, Rect bounds) {
@@ -121,23 +116,24 @@ public class MeasureWatchFace {
             :45 -> 0.75
         */
 
-        // tickPoints is bottom-aligned on y-axis, and needs offset on x-axis
-        float[] curTickPoints = tickPoints.clone();
+        // tick points are bottom-aligned on y-axis, and need offset on x-axis
+        float[] curTickPoints = new float[TICK_COUNT * 4];
+        float centerX = bounds.centerX();
         float offsetY = bounds.centerY();
-        float offsetX = minuteFloat * TICK_SPACING*4;
+        float offsetX = (minuteFloat * TICK_SPACING*4)
+                + (TICK_COUNT/2 * TICK_SPACING);
+        int tickCount = curTickPoints.length / 4;
 
-        for (int i = 0; i < curTickPoints.length / 4; i++) {
+        for (int i = 0; i < tickCount; i++) {
             for (int j = 0; j < 4; j++) {
                 float val = 0;
                 switch (j) {
                     case 0: // xStart
-                        val = i*TICK_SPACING - offsetX;
+                    case 2: // xEnd
+                        val = i*TICK_SPACING + centerX - offsetX;
                         break;
                     case 1: // yStart
                         val = 0 + offsetY;
-                        break;
-                    case 2: // xEnd
-                        val = i*TICK_SPACING - offsetX;
                         break;
                     case 3: // yEnd
                         if (i%4 == 0) val = TICK_HOUR_LENGTH;
